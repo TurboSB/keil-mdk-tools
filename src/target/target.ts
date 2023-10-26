@@ -1,78 +1,198 @@
 import * as vscode from 'vscode';
+import * as node_path from 'path';
+import * as fs from 'fs';
+import { Console } from 'console';
 
 export default abstract class Target {
   // protected projectPath: string;
   label: string;
+  protected projFile: string;
+  protected targetDOM: any;
+  protected includes: Set<string>;
+  protected defines: Set<string>;
 
   // readonly targetName: string;
   abstract readonly exe: string;
 
   protected get config(): vscode.WorkspaceConfiguration {
-    return vscode.workspace.getConfiguration('keil-vscode');
+    return vscode.workspace.getConfiguration('keil-mdk-tools');
   }
 
-  constructor(dom: any) {
+  constructor(dom: any, projFile: string) {
     this.label = dom['TargetName'];
+    this.targetDOM = dom;
+    this.includes = new Set();
+    this.defines = new Set();
+    this.projFile = projFile;
   }
 
-  // private runTask(name: string, commands: string[]) {
-  //   let args: string[] = [];
+  async load(): Promise<void> {
+    const defineListStr: string = this.getDefineString(this.targetDOM);
+    const incListStr: string = this.getIncString(this.targetDOM);
+    const refPath = this.getOutputFolder(this.targetDOM);
 
-  //   args.push('-o', this.projectPath);
-  //   args = args.concat(commands);
+    // Add defines
+    this.defines.clear();
 
-  //   const isCmd = /cmd.exe$/i.test((vscode.env as any).shell);
-  //   const quote = isCmd ? '"' : '\'';
-  //   const invokePrefix = isCmd ? '' : '& ';
-  //   const cmdPrefixSuffix = isCmd ? '"' : '';
+    defineListStr.split(/,|\s+/).forEach((define) => {
+      if (define.trim() !== '') {
+        this.defines.add(define);
+      }
+    });
 
-  //   let commandLine = invokePrefix + this.quoteString(this.config.get('Uv4Caller.exe') as string, quote) + ' ';
-  //   commandLine += args.map((arg) => { return this.quoteString(arg, quote); }).join(' ');
+    // Add arm macros/sys includes
+    const sysDefines = this.getSysDefines(this.targetDOM);
+    for (const sDef of sysDefines) {
+      this.defines.add(sDef);
+    }
 
-  //   // use task
-  //   if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+    // Add user defines (makefile)
+    const userDefines = (this.config.get('UserDefines') as string).split(/\r\n|\n/);
+    for (const uDef of userDefines) {
+      this.defines.add(uDef);
+    }
 
-  //     const task = new vscode.Task({ type: 'keil-task' }, vscode.TaskScope.Global, name, 'shell');
-  //     task.execution = new vscode.ShellExecution(cmdPrefixSuffix + commandLine + cmdPrefixSuffix);
-  //     task.isBackground = false;
-  //     // task.problemMatchers = this.getProblemMatcher();
-  //     task.presentationOptions = {
-  //       echo: false,
-  //       focus: false,
-  //       clear: true
-  //     };
-  //     vscode.tasks.executeTask(task);
+    // Add includes
+    this.includes.clear();
 
-  //   } else {
+    let incList = incListStr.split(';');
+    incList.forEach((path) => {
+      const realPath = path.trim();
+      if (realPath !== '') {
+        this.includes.add(node_path.normalize(realPath));
+      }
+    });
 
-  //     const index = vscode.window.terminals.findIndex((ter) => {
-  //       return ter.name === name;
-  //     });
+    if (refPath !== undefined) {
+      const refPathAbs = node_path.join(node_path.dirname(this.projFile), refPath);
+      let groups: any[];
+      let _groups = this.getGroups(this.targetDOM);
+      if (Array.isArray(_groups)) {
+        groups = _groups;
+      } else {
+        groups = [_groups];
+      }
 
-  //     if (index !== -1) {
-  //       vscode.window.terminals[index].hide();
-  //       vscode.window.terminals[index].dispose();
-  //     }
+      for (const group of groups) {
 
-  //     const terminal = vscode.window.createTerminal(name);
-  //     terminal.show();
-  //     terminal.sendText(commandLine);
-  //   }
-  // }
+        if (group['Files'] !== undefined) {
 
-  // build() {
-  //   this.runTask('build', this.getBuildCommand());
-  // }
+          let isGroupExcluded = false;
+          let fileList: any[];
+          // console.log('GroupOption',group['GroupOption']);
+          const gOption = group['GroupOption'];
+          if (gOption !== undefined) { // check group is excluded
+            const gComProps = gOption['CommonProperty'];
+            if (gComProps !== undefined) {
+              isGroupExcluded = (gComProps['IncludeInBuild'] === 0);
+            }
+          }
 
-  // rebuild() {
-  //   this.runTask('rebuild', this.getRebuildCommand());
-  // }
+          if (isGroupExcluded === false) {
+            if (Array.isArray(group['Files'])) {
+              fileList = [];
+              for (const files of group['Files']) {
+                if (Array.isArray(files['File'])) {
+                  fileList = fileList.concat(files['File']);
+                }
+                else if (files['File'] !== undefined) {
+                  fileList.push(files['File']);
+                }
+              }
+            } else {
+              if (Array.isArray(group['Files']['File'])) {
+                fileList = group['Files']['File'];
+              }
+              else if (group['Files']['File'] !== undefined) {
+                fileList = [group['Files']['File']];
+              } else {
+                fileList = [];
+              }
+            }
 
-  // download() {
-  //   this.runTask('download', this.getDownloadCommand());
-  // }
+            for (const file of fileList) {
+              let isFileExcluded = false;
+              if (file['FileOption']) { // check file is enable
+                const fOption = file['FileOption']['CommonProperty'];
+                if (fOption && fOption['IncludeInBuild'] === '0') {
+                  isFileExcluded = true;
+                }
+              }
 
-  // private quoteString(str: string, quote: string = '"'): string {
-  //   return str.includes(' ') ? (quote + str + quote) : str;
-  // }
+              if (isFileExcluded === false) {
+                const sourceFile = file['FilePath'].trim();
+                if (sourceFile !== '') {
+                  //this.includes.add(node_path.normalize(sourceFile));
+                  const refFile = node_path.join('.\\' + refPathAbs, node_path.parse(sourceFile).name + '.d');
+                  if (fs.existsSync(refFile) === true) {
+                    if (fs.lstatSync(refFile).isFile() === true) {
+                      const lines = fs.readFileSync(refFile, 'utf-8').split(/\r\n|\n/);
+                      const refFileList = this.parseRefLines(this.targetDOM, lines);
+                      for (const ref of refFileList) {
+                        if (node_path.extname(ref) !== '') {
+                          if (this.includes.has(node_path.normalize(node_path.dirname(ref))) === false) {
+                            this.includes.add(node_path.normalize(ref));
+                          }
+                        }
+                        else {
+                          this.includes.add(node_path.normalize(ref));
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    //update cpp properties
+    this.updateCppProperties();
+  }
+
+  private updateCppProperties() {
+    const cppFile = node_path.join(node_path.dirname(this.projFile), '.vscode', 'c_cpp_properties.json');
+    let obj: any;
+
+    if (fs.existsSync(cppFile) === true) {
+      try {
+        obj = JSON.parse(fs.readFileSync(cppFile, 'utf-8'));
+      }
+      catch (error) {
+        vscode.window.showErrorMessage(`c_cpp_properties read fail, msg: ${(error as Error).message}`);
+        obj = this.getDefCppProperties();
+      }
+    }
+    else {
+      obj = this.getDefCppProperties();
+    }
+
+    const configList: any[] = obj['configurations'];
+    const index = configList.findIndex((conf) => { return conf.name === this.label; });
+
+    if (index === -1) {
+      configList.push({
+        name: this.label,
+        includePath: Array.from(this.includes),
+        defines: Array.from(this.defines),
+        intelliSenseMode: 'clang-arm'
+      });
+    }
+    else {
+      configList[index]['includePath'] = Array.from(this.includes);
+      configList[index]['defines'] = Array.from(this.defines);
+    }
+
+    fs.writeFileSync(cppFile, JSON.stringify(obj, undefined, 4));
+  }
+
+  protected abstract getDefCppProperties(): any;
+  protected abstract getDefineString(target: any): string;
+  protected abstract getSysDefines(target: any): string[];
+  protected abstract getIncString(target: any): string;
+  protected abstract getGroups(target: any): any[];
+  protected abstract getOutputFolder(target: any): string | undefined;
+  protected abstract parseRefLines(target: any, lines: string[]): string[];
 }

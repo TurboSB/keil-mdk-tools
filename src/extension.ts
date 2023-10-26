@@ -28,37 +28,37 @@ export function activate(context: vscode.ExtensionContext) {
     }
   };
 
-  subscriber.push(vscode.commands.registerCommand('keil-vscode.project.build', () => prevent(explorer.build)));
-  subscriber.push(vscode.commands.registerCommand('keil-vscode.project.rebuild', () => prevent(explorer.build.bind(explorer, true))));
-  subscriber.push(vscode.commands.registerCommand('keil-vscode.project.download', () => prevent(explorer.download)));
-  subscriber.push(vscode.commands.registerCommand('keil-vscode.project.switch', () => prevent(explorer.switch)));
+  subscriber.push(vscode.commands.registerCommand('keil-mdk-tools.project.build', () => prevent(explorer.build)));
+  subscriber.push(vscode.commands.registerCommand('keil-mdk-tools.project.rebuild', () => prevent(explorer.build.bind(explorer, true))));
+  subscriber.push(vscode.commands.registerCommand('keil-mdk-tools.project.download', () => prevent(explorer.download)));
+  subscriber.push(vscode.commands.registerCommand('keil-mdk-tools.project.switch', () => prevent(explorer.switch)));
 
   const targetStatusbar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
   targetStatusbar.tooltip = localize?.['extension.statusbar.switch.tips'] || 'Switch Keil Project Target';
-  targetStatusbar.command = 'keil-vscode.project.switch';
-  targetStatusbar.text = `$(keil-v-switch) []`;
+  targetStatusbar.command = 'keil-mdk-tools.project.switch';
+  targetStatusbar.text = `$(keil-mdk-switch) []`;
   targetStatusbar.show();
 
   explorer.on('update', () => {
-    targetStatusbar.text = `$(keil-v-switch) [${explorer.targetLabel}]`;
+    targetStatusbar.text = `$(keil-mdk-switch) [${explorer.targetLabel}]`;
   });
 
   const buildStatusbar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
   buildStatusbar.tooltip = localize?.['extension.statusbar.build.tips'] || 'Build Keil Project';
-  buildStatusbar.command = 'keil-vscode.project.build';
-  buildStatusbar.text = '$(keil-v-build)';
+  buildStatusbar.command = 'keil-mdk-tools.project.build';
+  buildStatusbar.text = '$(keil-mdk-build)';
   buildStatusbar.show();
 
   const rebuildStatusbar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
   rebuildStatusbar.tooltip = localize?.['extension.statusbar.rebuild.tips'] || 'Rebuild Keil Project';
-  rebuildStatusbar.command = 'keil-vscode.project.rebuild';
-  rebuildStatusbar.text = '$(keil-v-rebuild) ';
+  rebuildStatusbar.command = 'keil-mdk-tools.project.rebuild';
+  rebuildStatusbar.text = '$(keil-mdk-rebuild) ';
   rebuildStatusbar.show();
 
   const downloadStatusbar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
   downloadStatusbar.tooltip = localize?.['extension.statusbar.download.tips'] || 'Download HEX to Board';
-  downloadStatusbar.command = 'keil-vscode.project.download';
-  downloadStatusbar.text = '$(keil-v-download) ';
+  downloadStatusbar.command = 'keil-mdk-tools.project.download';
+  downloadStatusbar.text = '$(keil-mdk-download) ';
   downloadStatusbar.show();
 
   explorer.loadWorkspace();

@@ -1,21 +1,20 @@
 {
-  "name": "keil-vscode",
-  "displayName": "Keil V",
-  "description": "An assistant for Keil uVision 5",
-  "version": "0.0.2",
-  "publisher": "jiyun-tech",
+  "name": "keil-mdk-tools",
+  "displayName": "Keil MDK Tools",
+  "description": "load and build Keil uVision projects",
+  "version": "1.0.0",
+  "publisher": "TurboSB",
   "author": {
-    "name": "www.jiyun.tech",
-    "email": "mboss0@163.com"
+    "name": "TurboSB"
   },
   "keywords": [
     "keil",
     "mdk",
     "stm32"
   ],
-  "homepage": "https://github.com/mbossX/keil-vscode",
+  "homepage": "https://github.com/TurboSB/keil-mdk-tools",
   "engines": {
-    "vscode": "^1.63.0"
+    "vscode": "^1.67.0"
   },
   "categories": [
     "Programming Languages",
@@ -23,42 +22,41 @@
     "Other"
   ],
   "activationEvents": [
-    "*"
+    "onStartupFinished"
   ],
   "icon": "res/icon.png",
   "main": "./dist/extension.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/mbossX/keil-vscode.git"
+    "url": "https://github.com/TurboSB/keil-mdk-tools.git"
   },
   "bugs": {
-    "url": "https://github.com/mbossX/keil-vscode/issues",
-    "email": "mboss0@163.com"
+    "url": "https://github.com/TurboSB/keil-mdk-tools/issues"
   },
   "contributes": {
     "icons": {
-      "keil-v-build": {
+      "keil-mdk-build": {
         "description": "build icon",
         "default": {
           "fontPath": "./res/iconfont.woff",
           "fontCharacter": "\\e615"
         }
       },
-      "keil-v-rebuild": {
+      "keil-mdk-rebuild": {
         "description": "rebuild icon",
         "default": {
           "fontPath": "./res/iconfont.woff",
           "fontCharacter": "\\e616"
         }
       },
-      "keil-v-download": {
+      "keil-mdk-download": {
         "description": "download icon",
         "default": {
           "fontPath": "./res/iconfont.woff",
           "fontCharacter": "\\e618"
         }
       },
-      "keil-v-switch": {
+      "keil-mdk-switch": {
         "description": "switch icon",
         "default": {
           "fontPath": "./res/iconfont.woff",
@@ -70,36 +68,49 @@
       {
         "title": "%extension.name%",
         "properties": {
-          "keil-vscode.MDK.Uv4Path": {
+          "keil-mdk-tools.MDK.Uv4Path": {
             "type": "string",
             "scope": "machine",
             "markdownDescription": "%extension.settings.mdk%",
             "default": "null"
           },
-          "keil-vscode.C51.Uv4Path": {
+          "keil-mdk-tools.C51.Uv4Path": {
             "type": "string",
             "scope": "machine",
             "markdownDescription": "%extension.settings.c51%",
             "default": "null"
+          },
+          "keil-mdk-tools.UserDefines": {
+            "type": "string",
+            "editPresentation": "multilineText",
+            "scope": "window",
+            "markdownDescription": "%extension.settings.userDefines%",
+            "default": ""
+          },
+          "keil-mdk-tools.ActiveTarget": {
+            "type": "string",
+            "scope": "window",
+            "markdownDescription": "%extension.settings.activeTarget%",
+            "default": ""
           }
         }
       }
     ],
     "commands": [
       {
-        "command": "keil-vscode.project.build",
+        "command": "keil-mdk-tools.project.build",
         "title": "%extension.commands.build.title%"
       },
       {
-        "command": "keil-vscode.project.rebuild",
+        "command": "keil-mdk-tools.project.rebuild",
         "title": "%extension.commands.rebuild.title%"
       },
       {
-        "command": "keil-vscode.project.download",
+        "command": "keil-mdk-tools.project.download",
         "title": "%extension.commands.download.title%"
       },
       {
-        "command": "keil-vscode.project.switch",
+        "command": "keil-mdk-tools.project.switch",
         "title": "%extension.commands.switch.title%"
       }
     ],
@@ -144,28 +155,29 @@
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
     "test": "node ./out/test/runTest.js",
-    "login": "vsce login jiyun-tech i6b7aetlizyjsk37zhbt7y3cpuoqyjlrua7iqsvomppliqc7ukna",
     "publish": "vsce publish"
   },
   "devDependencies": {
-    "@types/glob": "^7.1.4",
-    "@types/mocha": "^9.0.0",
-    "@types/node": "14.x",
-    "@types/vscode": "^1.63.0",
+    "@types/glob": "^8.1.0",
+    "@types/mocha": "^10.0.1",
+    "@types/node": "16.x",
+    "@types/vscode": "^1.67.0",
     "@types/xml2js": "^0.4.5",
-    "@typescript-eslint/eslint-plugin": "^5.1.0",
-    "@typescript-eslint/parser": "^3.10.1",
-    "@vscode/test-electron": "^1.6.2",
-    "eslint": "^8.1.0",
-    "glob": "^7.1.7",
-    "mocha": "^6.2.3",
-    "ts-loader": "^9.2.5",
-    "typescript": "^4.4.4",
-    "vsce": "2.9.3",
-    "webpack": "^5.52.1",
-    "webpack-cli": "^4.8.0",
-    "xml2js": "^0.4.23"
+    "@typescript-eslint/eslint-plugin": "^6.7.5",
+    "@typescript-eslint/parser": "^6.7.5",
+    "@vscode/test-electron": "^2.3.5",
+    "@vscode/vsce": "2.21.1",
+    "eslint": "^8.51.0",
+    "fast-xml-parser": "^4.3.2",
+    "glob": "^8.1.0",
+    "mocha": "^10.2.0",
+    "ts-loader": "^9.5.0",
+    "typescript": "^5.2.2",
+    "webpack": "^5.88.2",
+    "webpack-cli": "^5.1.4"
   },
-  "dependencies": {
-  }
+  "dependencies": {},
+  "extensionDependencies": [
+    "ms-vscode.cpptools"
+  ]
 }

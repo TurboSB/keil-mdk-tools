@@ -4,7 +4,7 @@ import { createHash } from 'crypto';
 import * as fs from 'fs';
 import { dirname, basename, extname, join } from 'path';
 import * as vscode from 'vscode';
-import * as xml2js from 'xml2js';
+import { XMLParser } from 'fast-xml-parser';
 import Target from './target/target';
 import ArmTarget from './target/arm';
 import C51Target from './target/c51';
@@ -16,10 +16,10 @@ export default class KeilProject extends EventEmitter {
   projectPath: string;
   targets: Target[] = [];
   private _currentTarget: Target | undefined;
-  get currentTarget () {
+  get currentTarget() {
     return this._currentTarget;
   }
-  set currentTarget (v: Target | undefined) {
+  set currentTarget(v: Target | undefined) {
     this.currentTarget = v;
   }
 
@@ -42,8 +42,12 @@ export default class KeilProject extends EventEmitter {
   }
 
   async load() {
-    const parser = new xml2js.Parser({ explicitArray: false });
-    const doc = await parser.parseStringPromise({ toString: () => fs.readFileSync(this.projectPath, 'utf-8') });
+    const options = {
+      ignoreAttributes: false
+    };
+    const parser = new XMLParser(options);
+    const xmldoc = fs.readFileSync(this.projectPath, { encoding: 'utf8' });
+    const doc = parser.parse(xmldoc);
     const targets = doc['Project']['Targets']['Target'];
 
     this.targets = [];
@@ -53,6 +57,10 @@ export default class KeilProject extends EventEmitter {
       }
     } else {
       this.targets.push(this.createTarget(this.projectPath, targets));
+    }
+
+    for (const target of this.targets) {
+      await target.load();
     }
   }
 
@@ -84,9 +92,9 @@ export default class KeilProject extends EventEmitter {
 
   private createTarget(projFile: string, targetDOM: any) {
     if (extname(projFile).toLowerCase() === '.uvproj') {
-      return new C51Target(targetDOM);
+      return new C51Target(targetDOM, projFile);
     } else {
-      return new ArmTarget(targetDOM);
+      return new ArmTarget(targetDOM, projFile);
     }
   }
 }

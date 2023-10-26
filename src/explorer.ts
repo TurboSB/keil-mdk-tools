@@ -11,7 +11,7 @@ export default class Explorer extends EventEmitter {
   private projects: Map<string, KeilProject> = new Map();
   private currentProject: KeilProject | undefined;
   private currentTarget: Target | undefined;
-	private channel: vscode.OutputChannel;
+  private channel: vscode.OutputChannel;
 
   get targetLabel() {
     return `${this.currentTarget?.label}`;
@@ -19,8 +19,7 @@ export default class Explorer extends EventEmitter {
 
   constructor(private localize: any = {}) {
     super();
-
-    this.channel = vscode.window.createOutputChannel('keil-vscode');
+    this.channel = vscode.window.createOutputChannel('keil-mdk-tools');
   }
 
   async loadWorkspace() {
@@ -55,6 +54,8 @@ export default class Explorer extends EventEmitter {
     const labels = targetName.split(' ');
     this.currentProject = this.projects.get(labels[1]);
     this.currentTarget = this.currentProject?.targets.find(t => t.label === labels[0]);
+    vscode.workspace.getConfiguration('keil-mdk-tools').update('ActiveTarget', this.targetLabel);
+    vscode.commands.executeCommand('C_Cpp.ConfigurationSelect');
     this.emit('update');
   }
 
@@ -80,7 +81,16 @@ export default class Explorer extends EventEmitter {
       if (!this.currentProject) {
         this.currentProject = project;
         if (!this.currentTarget || !project.targets.includes(this.currentTarget)) {
-          this.currentTarget = project.targets[0];
+          const activeTarget = vscode.workspace.getConfiguration('keil-mdk-tools').get('ActiveTarget') as string;
+          for (const tgt of project.targets) {
+            if (activeTarget === tgt.label) {
+              this.currentTarget = tgt;
+            }
+          }
+          if (!this.currentTarget || !project.targets.includes(this.currentTarget)) {
+            this.currentTarget = project.targets[0];
+          }
+
         }
       }
 
