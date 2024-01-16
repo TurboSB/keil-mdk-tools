@@ -68,7 +68,7 @@ export default class Explorer extends EventEmitter {
   }
 
   async download() {
-    await this.runTask('rebuild', 'f');
+    await this.runTask('flash', 'f');
   }
 
   async open(path: string): Promise<KeilProject | undefined> {
