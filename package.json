@@ -2,7 +2,7 @@
   "name": "keil-mdk-tools",
   "displayName": "Keil MDK Tools",
   "description": "load and build Keil uVision projects",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "publisher": "TurboSB",
   "author": {
     "name": "TurboSB"

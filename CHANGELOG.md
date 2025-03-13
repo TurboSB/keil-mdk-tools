@@ -2,6 +2,9 @@
 
 All notable changes to the "Keil-MDK-Tools" extension will be documented in this file.
 
+## [v1.0.4]
+- use absolute reference path
+
 ## [v1.0.3]
 - Better target validation
 

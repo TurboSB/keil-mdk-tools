@@ -123,7 +123,7 @@ export default abstract class Target {
                 const sourceFile = file['FilePath'].trim();
                 if (sourceFile !== '') {
                   //this.includes.add(node_path.normalize(sourceFile));
-                  const refFile = node_path.join('.\\' + refPathAbs, node_path.parse(sourceFile).name + '.d');
+                  const refFile = node_path.join(refPathAbs, node_path.parse(sourceFile).name + '.d');
                   if (fs.existsSync(refFile) === true) {
                     if (fs.lstatSync(refFile).isFile() === true) {
                       const lines = fs.readFileSync(refFile, 'utf-8').split(/\r\n|\n/);
