@@ -12,7 +12,7 @@
   "extension.text.explorer.open": "Open project: '${path}' failed.",
   "extension.text.explorer.busy": "Task is running, plase wait.",
   "extension.text.task.noproject": "No project and target active.",
-  "extension.text.task.notarget": "Target is not belong to project.",
+  "extension.text.task.notarget": "Target does not belong to project.",
   "extension.settings.activeTarget": "The active uVision Target to compile for",
   "extension.settings.mdk": "MDK uVersion exe path",
   "extension.settings.c51": "C51 uVersion exe path",
