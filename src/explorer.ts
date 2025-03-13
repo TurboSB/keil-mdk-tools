@@ -120,10 +120,28 @@ export default class Explorer extends EventEmitter {
       vscode.window.showErrorMessage(this.localize?.['extension.text.task.noproject'] || 'No project and target active.');
       return;
     }
-    if (!this.currentProject.targets.includes(this.currentTarget)) {
-      vscode.window.showErrorMessage(this.localize?.['extension.text.task.notarget'] || 'Target is not belong to project.');
+    let targetValid = false;
+    for (const target of this.currentProject.targets) {
+      if ((this.currentTarget.exe === target.exe) && (this.currentTarget.label === target.label)) {
+        targetValid = true;
+      }
+    }
+    if (!targetValid) {
+      let str = "Project Targets:\n";
+      for (const target of this.currentProject.targets) {
+        str = str + " - exe: " + target.exe + "\n - label: " + target.label + "\n\n";
+      }
+      vscode.window.showErrorMessage(this.localize?.['extension.text.task.notarget'] + "\n - exe: " + this.currentTarget.exe + "\n - label: " + this.currentTarget.label + "\n - project: " + this.currentProject.projectPath + "\n - log: " + this.currentProject.logPath + str || 'Target does not belong to project.');
       return;
     }
+    //if (!this.currentProject.targets.includes(this.currentTarget)) {
+    //  let str = "Project Targets:\n";
+    //  for (const target of this.currentProject.targets) {
+    //    str = str + " - exe: " + target.exe + "\n - label: " + target.label + "\n\n";
+    //  }
+    //  vscode.window.showErrorMessage(this.localize?.['extension.text.task.notarget'] + "\n - exe: " + this.currentTarget.exe + "\n - label: " + this.currentTarget.label + "\n - project: " + this.currentProject.projectPath + "\n - log: " + this.currentProject.logPath + str || 'Target does not belong to project.');
+    //  return;
+    //}
 
     writeFileSync(this.currentProject!.logPath, '');
     const command = `"${this.currentTarget.exe}" -${type} "${this.currentProject.projectPath}" -j0 -t ${this.currentTarget.label} -o "${this.currentProject.logPath}"`;
